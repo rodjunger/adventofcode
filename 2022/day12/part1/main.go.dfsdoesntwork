@@ -1,0 +1,148 @@
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"log"
+	"os"
+	"sync"
+)
+
+type point struct{ row, column int }
+
+func validDirection(current, desired point, heightMap [][]rune, visited map[int]map[int]bool) bool {
+	switch {
+	case desired.column > len(heightMap[0])-1,
+		desired.column < 0,
+		desired.row > len(heightMap)-1,
+		desired.row < 0,
+		heightMap[desired.row][desired.column] > heightMap[current.row][current.column]+1,
+		visited[desired.row][desired.column]:
+		return false
+	default:
+		//fmt.Println(desired)
+		return true
+	}
+}
+
+func findShortestPath(c, e point, heightMap [][]rune, nSteps int, visited map[int]map[int]bool) int {
+	//time.Sleep(time.Second)
+	//fmt.Println(c)
+	if c == e {
+		fmt.Println("found end!", nSteps)
+		return nSteps
+	}
+
+	nSteps += 1
+
+	visited[c.row][c.column] = true
+
+	var (
+		directions    = []point{{c.row, c.column + 1}, {c.row, c.column - 1}, {c.row - 1, c.column}, {c.row + 1, c.column}}
+		localMinSteps = 0
+	)
+
+	if nSteps < 0 {
+		var (
+			wg       sync.WaitGroup
+			returnCh = make(chan int)
+		)
+
+		for i, _ := range directions {
+			if !validDirection(c, directions[i], heightMap, visited) {
+				continue
+			}
+
+			newVisitedMap := map[int]map[int]bool{}
+			for i := range heightMap {
+				newVisitedMap[i] = make(map[int]bool)
+				for j := range visited[i] {
+					newVisitedMap[i][j] = visited[i][j]
+				}
+			}
+
+			wg.Add(1)
+			idx := i
+			direction := directions[idx]
+			go func() {
+				returnCh <- findShortestPath(direction, e, heightMap, nSteps, newVisitedMap)
+				wg.Done()
+			}()
+		}
+
+		go func() {
+			wg.Wait()
+			close(returnCh)
+		}()
+
+		for steps := range returnCh {
+			if steps == 0 {
+				continue
+			}
+			if steps < localMinSteps || localMinSteps == 0 {
+				localMinSteps = steps
+			}
+		}
+	} else {
+		for _, direction := range directions {
+			if !validDirection(c, direction, heightMap, visited) {
+				fmt.Println("invalid direciton", direction)
+				continue
+			}
+			steps := findShortestPath(direction, e, heightMap, nSteps, visited)
+			if steps == 0 {
+				continue
+			}
+			if steps < localMinSteps || localMinSteps == 0 {
+				localMinSteps = steps
+			}
+		}
+	}
+
+	visited[c.row][c.column] = false
+	return localMinSteps
+}
+
+func main() {
+	file, err := os.Open("input.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+
+	var (
+		heightMap  [][]rune
+		start, end point
+	)
+
+	for row := 0; scanner.Scan(); row++ {
+		line := scanner.Text()
+		heightMap = append(heightMap, []rune(line))
+		for i, r := range line {
+			//Converting to rune and back to string is kind meh
+			if string(r) == "S" {
+				heightMap[row][i] = 'a'
+				start = point{row: row, column: i}
+			} else if string(r) == "E" {
+				heightMap[row][i] = 'z'
+				end = point{row: row, column: i}
+			}
+		}
+	}
+
+	visitedMap := map[int]map[int]bool{}
+	for i := range heightMap {
+		visitedMap[i] = make(map[int]bool)
+	}
+
+	fmt.Println(findShortestPath(start, end, heightMap, 0, visitedMap))
+
+	//fmt.Println(heightMap, '\n', start, end)
+
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+}
