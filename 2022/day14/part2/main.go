@@ -28,10 +28,6 @@ type pos struct {
 	x, y int
 }
 
-func (p pos) toStruct() [2]int {
-	return [2]int{p.x, p.y}
-}
-
 func Min(x, y int) int {
 	if x < y {
 		return x
@@ -90,11 +86,7 @@ func (c *caveMap) simulateSand() bool {
 
 func (c *caveMap) writeVertical(x, startY, endY int) {
 	currentY, endY := Min(startY, endY), Max(startY, endY)
-	if endY > c.maxDepth {
-		c.maxDepth = endY
-	}
 	for ; currentY <= endY; currentY++ {
-		//fmt.Println("writing at", x, currentY)
 		c.cave[pos{x, currentY}] = rock
 	}
 }
@@ -102,12 +94,16 @@ func (c *caveMap) writeVertical(x, startY, endY int) {
 func (c *caveMap) writeHorizontal(y, startX, endX int) {
 	currentX, endX := Min(startX, endX), Max(startX, endX)
 	for ; currentX <= endX; currentX++ {
-		//fmt.Println("writing at", currentX, y)
 		c.cave[pos{currentX, y}] = rock
 	}
 }
 
 func (c *caveMap) writeLine(start, end pos) {
+	maxY := Max(start.y, end.y)
+	if maxY > c.maxDepth {
+		c.maxDepth = maxY
+	}
+
 	if start.x == end.x {
 		c.writeVertical(start.x, start.y, end.y)
 	} else {
