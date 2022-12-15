@@ -19,17 +19,13 @@ const (
 
 // default return value is air, so only need to set rock and sand
 type caveMap struct {
-	cave     map[[2]int]blockType
+	cave     map[pos]blockType
 	maxDepth int
 }
 
 // x is column, y is row
 type pos struct {
 	x, y int
-}
-
-func (p pos) toStruct() [2]int {
-	return [2]int{p.x, p.y}
 }
 
 func Min(x, y int) int {
@@ -46,9 +42,9 @@ func Max(x, y int) int {
 	return y
 }
 
-func (p pos) generateFallingDirections() [3][2]int {
-	down, horizontalLeft, horizontalRight := pos{p.x, p.y + 1}.toStruct(), pos{p.x - 1, p.y + 1}.toStruct(), pos{p.x + 1, p.y + 1}.toStruct()
-	return [3][2]int{down, horizontalLeft, horizontalRight}
+func (p pos) generateFallingDirections() []pos {
+	down, horizontalLeft, horizontalRight := pos{p.x, p.y + 1}, pos{p.x - 1, p.y + 1}, pos{p.x + 1, p.y + 1}
+	return []pos{down, horizontalLeft, horizontalRight}
 }
 
 // returns true on success, false if it fell forever
@@ -63,13 +59,13 @@ func (c *caveMap) simulateSand() bool {
 		for i := 0; i < len(possibleLocations) && !foundLocation; i++ {
 			loc := possibleLocations[i]
 			if c.cave[loc] == air {
-				sandLocation = pos{loc[0], loc[1]}
+				sandLocation = loc
 				foundLocation = true
 			}
 		}
 		//Nowhere to go
 		if !foundLocation {
-			c.cave[sandLocation.toStruct()] = sand
+			c.cave[sandLocation] = sand
 			return true
 		}
 	}
@@ -83,7 +79,7 @@ func (c *caveMap) writeVertical(x, startY, endY int) {
 	}
 	for ; currentY <= endY; currentY++ {
 		//fmt.Println("writing at", x, currentY)
-		c.cave[[2]int{x, currentY}] = rock
+		c.cave[pos{x, currentY}] = rock
 	}
 }
 
@@ -91,7 +87,7 @@ func (c *caveMap) writeHorizontal(y, startX, endX int) {
 	currentX, endX := Min(startX, endX), Max(startX, endX)
 	for ; currentX <= endX; currentX++ {
 		//fmt.Println("writing at", currentX, y)
-		c.cave[[2]int{currentX, y}] = rock
+		c.cave[pos{currentX, y}] = rock
 	}
 }
 
@@ -113,7 +109,7 @@ func main() {
 	scanner := bufio.NewScanner(file)
 
 	cave := caveMap{
-		cave: make(map[[2]int]blockType),
+		cave: make(map[pos]blockType),
 	}
 
 	for scanner.Scan() {

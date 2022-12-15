@@ -19,7 +19,7 @@ const (
 
 // default return value is air, so only need to set rock and sand
 type caveMap struct {
-	cave     map[[2]int]blockType
+	cave     map[pos]blockType
 	maxDepth int
 }
 
@@ -46,16 +46,16 @@ func Max(x, y int) int {
 	return y
 }
 
-func (p pos) generateFallingDirections() [3][2]int {
-	down, horizontalLeft, horizontalRight := pos{p.x, p.y + 1}.toStruct(), pos{p.x - 1, p.y + 1}.toStruct(), pos{p.x + 1, p.y + 1}.toStruct()
-	return [3][2]int{down, horizontalLeft, horizontalRight}
+func (p pos) generateFallingDirections() []pos {
+	down, horizontalLeft, horizontalRight := pos{p.x, p.y + 1}, pos{p.x - 1, p.y + 1}, pos{p.x + 1, p.y + 1}
+	return []pos{down, horizontalLeft, horizontalRight}
 }
 
 // returns true on success, false if it fell forever
 func (c *caveMap) simulateSand() bool {
 	sandLocation := pos{500, 0}
 
-	if c.cave[sandLocation.toStruct()] == sand {
+	if c.cave[sandLocation] == sand {
 		return false
 	}
 
@@ -68,19 +68,19 @@ func (c *caveMap) simulateSand() bool {
 			loc := possibleLocations[i]
 			var block blockType
 			//Simulate the rock bottom
-			if loc[1] == c.maxDepth+2 {
+			if loc.y == c.maxDepth+2 {
 				block = rock
 			} else {
 				block = c.cave[loc]
 			}
 			if block == air {
-				sandLocation = pos{loc[0], loc[1]}
+				sandLocation = loc
 				foundLocation = true
 			}
 		}
 		//Nowhere to go
 		if !foundLocation {
-			c.cave[sandLocation.toStruct()] = sand
+			c.cave[sandLocation] = sand
 			return true
 		}
 	}
@@ -95,7 +95,7 @@ func (c *caveMap) writeVertical(x, startY, endY int) {
 	}
 	for ; currentY <= endY; currentY++ {
 		//fmt.Println("writing at", x, currentY)
-		c.cave[[2]int{x, currentY}] = rock
+		c.cave[pos{x, currentY}] = rock
 	}
 }
 
@@ -103,7 +103,7 @@ func (c *caveMap) writeHorizontal(y, startX, endX int) {
 	currentX, endX := Min(startX, endX), Max(startX, endX)
 	for ; currentX <= endX; currentX++ {
 		//fmt.Println("writing at", currentX, y)
-		c.cave[[2]int{currentX, y}] = rock
+		c.cave[pos{currentX, y}] = rock
 	}
 }
 
@@ -125,7 +125,7 @@ func main() {
 	scanner := bufio.NewScanner(file)
 
 	cave := caveMap{
-		cave: make(map[[2]int]blockType),
+		cave: make(map[pos]blockType),
 	}
 
 	for scanner.Scan() {
@@ -155,5 +155,4 @@ func main() {
 	}
 
 	fmt.Println(sandsFallen)
-
 }
