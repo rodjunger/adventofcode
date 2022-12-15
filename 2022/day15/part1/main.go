@@ -53,8 +53,8 @@ func main() {
 	for _, sensor := range sensors {
 		distanceFromY := Abs(sensor.y - y)
 
-		fmt.Printf("Sensor x:%d, y: %d, distanceToClosestBeacon: %d, distanceFromY: %d\n",
-			sensor.x, sensor.y, sensor.distanceToClosestBeacon, distanceFromY)
+		//fmt.Printf("Sensor x:%d, y: %d, distanceToClosestBeacon: %d, distanceFromY: %d\n",
+		//	sensor.x, sensor.y, sensor.distanceToClosestBeacon, distanceFromY)
 
 		if distanceFromY > sensor.distanceToClosestBeacon {
 			continue
@@ -62,11 +62,11 @@ func main() {
 
 		distanceDelta := sensor.distanceToClosestBeacon - distanceFromY
 
-		fmt.Println("sensor is close enough, marking", (distanceDelta*2)+1, "indices")
+		//fmt.Println("sensor is close enough, marking", (distanceDelta*2)+1, "indices")
 
 		minIndex, maxIndex := sensor.x-distanceDelta, sensor.x+distanceDelta
 
-		fmt.Println("marking indexes", minIndex, "to", maxIndex)
+		//fmt.Println("marking indexes", minIndex, "to", maxIndex)
 		for i := minIndex; i <= maxIndex; i++ {
 			occupyedSpots[i] = struct{}{}
 		}

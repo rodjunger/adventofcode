@@ -41,19 +41,21 @@ func main() {
 	sensors := []sensor{}
 
 	for scanner.Scan() {
-		var (
-			curSensor sensor
-		)
+		var curSensor sensor
 		fmt.Sscanf(scanner.Text(), "Sensor at x=%d, y=%d: closest beacon is at x=%d, y=%d", &curSensor.x, &curSensor.y, &curSensor.beaconX, &curSensor.beaconY)
 		curSensor.distanceToClosestBeacon = manhattanDistance(curSensor.x, curSensor.y, curSensor.beaconX, curSensor.beaconY)
 		sensors = append(sensors, curSensor)
 	}
 
-	row := []vector{}
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
 
-	rows := 4000000
-
-	for y := 0; y < rows; y++ {
+	var (
+		row   = []vector{}
+		nRows = 4000000
+	)
+	for y := 0; y < nRows; y++ {
 		for _, sensor := range sensors {
 			distanceFromY := Abs(sensor.y - y)
 
@@ -69,8 +71,8 @@ func main() {
 				minIndex = 0
 			}
 
-			if maxIndex > rows {
-				maxIndex = rows
+			if maxIndex > nRows {
+				maxIndex = nRows
 			}
 
 			row = append(row, vector{minIndex, maxIndex})
@@ -91,13 +93,10 @@ func main() {
 			if row[j].x-row[j-1].y == 2 {
 				fmt.Println("found x:", row[j].x-1, "y:", y)
 				fmt.Println((uint64(row[j].x-1) * 4000000) + uint64(y))
+				return
 			}
 		}
 
 		row = row[:0]
-	}
-
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
 	}
 }
